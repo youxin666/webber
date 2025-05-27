@@ -69,8 +69,17 @@ jobs:
       - name: Find and copy worker file
         run: |
           cd bpb-repo
-          # Look for the main worker file
-          if [ -f "dist/_worker.js" ]; then
+          echo "Current directory structure:"
+          find . -name "*.js" -type f | head -10
+          
+          # Look for the main worker file in various locations
+          if [ -f "BPB-Worker-Panel-main/src/worker.js" ]; then
+            cp BPB-Worker-Panel-main/src/worker.js ../origin.js
+            echo "Found worker file in BPB-Worker-Panel-main/src/"
+          elif [ -f "src/worker.js" ]; then
+            cp src/worker.js ../origin.js
+            echo "Found worker file in src/"
+          elif [ -f "dist/_worker.js" ]; then
             cp dist/_worker.js ../origin.js
             echo "Found worker file in dist/"
           elif [ -f "build/_worker.js" ]; then
@@ -79,14 +88,10 @@ jobs:
           elif [ -f "_worker.js" ]; then
             cp _worker.js ../origin.js
             echo "Found worker file in root"
-          elif [ -f "src/worker.js" ]; then
-            cp src/worker.js ../origin.js
-            echo "Found worker file in src/"
           else
-            echo "Searching for any worker-related files..."
-            find . -name "*worker*.js" -type f | head -10
-            echo "Contents of src directory:"
-            ls -la src/ || echo "No src directory"
+            echo "Could not find worker file in expected locations"
+            echo "All JavaScript files found:"
+            find . -name "*.js" -type f
             exit 1
           fi
       - name: Verify file was found
