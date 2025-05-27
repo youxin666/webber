@@ -36,15 +36,13 @@ jobs:
         run: |
           javascript-obfuscator origin.js --output _worker.js \
             --compact true \
-            --control-flow-flattening ture \
-            --control-flow-flattening-threshold 1 \
-            --dead-code-injection ture \
-            --dead-code-injection-threshold 1 \
-            --identifier-names-generator hexadecimal \
-            --rename-globals ture \
+            --control-flow-flattening false \
+            --dead-code-injection false \
+            --identifier-names-generator mangled \
+            --rename-globals false \
             --string-array true \
             --string-array-encoding 'rc4' \
-            --string-array-threshold 1 \
+            --string-array-threshold 0.75 \
             --transform-object-keys true \
             --unicode-escape-sequence true
 
