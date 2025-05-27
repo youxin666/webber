@@ -21,13 +21,15 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g javascript-obfuscator
-      - name: Clone BPB repository
+      - name: Download and extract BPB repository
         run: |
-          git clone https://github.com/bia-pain-bache/BPB-Worker-Panel.git bpb-repo
-          cd bpb-repo
-          echo "Repository cloned successfully"
+          # Download as zip to avoid git submodule issues
+          wget -O bpb.zip https://github.com/bia-pain-bache/BPB-Worker-Panel/archive/refs/heads/main.zip
+          unzip bpb.zip
+          mv BPB-Worker-Panel-main bpb-repo
+          echo "Repository downloaded and extracted successfully"
           echo "Directory contents:"
-          ls -la
+          ls -la bpb-repo/
       - name: Build BPB project
         run: |
           cd bpb-repo
