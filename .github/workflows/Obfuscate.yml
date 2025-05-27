@@ -26,28 +26,46 @@ jobs:
           # Download as zip to avoid git submodule issues
           wget -O bpb.zip https://github.com/bia-pain-bache/BPB-Worker-Panel/archive/refs/heads/main.zip
           unzip bpb.zip
-          mv BPB-Worker-Panel-main bpb-repo
+          echo "Contents after extraction:"
+          ls -la
+          # Find the actual directory name
+          REPO_DIR=$(ls -d BPB-Worker-Panel-* | head -1)
+          echo "Found directory: $REPO_DIR"
+          mv "$REPO_DIR" bpb-repo
           echo "Repository downloaded and extracted successfully"
           echo "Directory contents:"
           ls -la bpb-repo/
       - name: Build BPB project
         run: |
           cd bpb-repo
-          echo "Installing project dependencies..."
-          npm install
-          echo "Building project..."
+          echo "Current directory: $(pwd)"
+          echo "Contents:"
+          ls -la
+          
+          # Check if package.json exists
           if [ -f "package.json" ]; then
+            echo "Found package.json, installing dependencies..."
+            npm install
+            echo "Building project..."
             # Check if there's a build script
-            if npm run | grep -q "build"; then
+            echo "Available npm scripts:"
+            npm run 2>/dev/null || echo "No scripts available"
+            
+            if npm run 2>/dev/null | grep -q "build"; then
+              echo "Running build script..."
               npm run build
-            elif npm run | grep -q "compile"; then
+            elif npm run 2>/dev/null | grep -q "compile"; then
+              echo "Running compile script..."
               npm run compile
             else
-              echo "No build script found, checking for bundled files..."
-              # Look for existing worker files
-              find . -name "*worker*.js" -o -name "_worker.js" | head -5
+              echo "No build script found, looking for existing worker files..."
             fi
+          else
+            echo "No package.json found, looking for existing worker files..."
           fi
+          
+          echo "Final directory contents:"
+          find . -name "*.js" | head -10
       - name: Find and copy worker file
         run: |
           cd bpb-repo
