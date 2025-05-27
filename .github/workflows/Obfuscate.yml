@@ -23,21 +23,26 @@ jobs:
           npm install -g javascript-obfuscator
       - name: Download and extract BPB repository
         run: |
+          # Clean up any existing directory first
+          rm -rf bpb-repo BPB-Worker-Panel-* || true
+          
           # Download as zip to avoid git submodule issues
           wget -O bpb.zip https://github.com/bia-pain-bache/BPB-Worker-Panel/archive/refs/heads/main.zip
           unzip bpb.zip
           echo "Contents after extraction:"
           ls -la
-          # Find the actual directory name
+          
+          # Find the actual directory name and rename it
           REPO_DIR=$(ls -d BPB-Worker-Panel-* | head -1)
           echo "Found directory: $REPO_DIR"
-          mv "$REPO_DIR" bpb-repo
+          mv "$REPO_DIR" bpb-temp
+          
           echo "Repository downloaded and extracted successfully"
           echo "Directory contents:"
-          ls -la bpb-repo/
+          ls -la bpb-temp/
       - name: Build BPB project
         run: |
-          cd bpb-repo
+          cd bpb-temp
           echo "Current directory: $(pwd)"
           echo "Contents:"
           ls -la
@@ -68,15 +73,12 @@ jobs:
           find . -name "*.js" | head -10
       - name: Find and copy worker file
         run: |
-          cd bpb-repo
+          cd bpb-temp
           echo "Current directory structure:"
           find . -name "*.js" -type f | head -10
           
           # Look for the main worker file in various locations
-          if [ -f "BPB-Worker-Panel-main/src/worker.js" ]; then
-            cp BPB-Worker-Panel-main/src/worker.js ../origin.js
-            echo "Found worker file in BPB-Worker-Panel-main/src/"
-          elif [ -f "src/worker.js" ]; then
+          if [ -f "src/worker.js" ]; then
             cp src/worker.js ../origin.js
             echo "Found worker file in src/"
           elif [ -f "dist/_worker.js" ]; then
