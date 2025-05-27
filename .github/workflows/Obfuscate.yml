@@ -21,31 +21,63 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g javascript-obfuscator
-      - name: Clone BPB work.js
+      - name: Clone BPB repository
         run: |
-          # Download the correct bundled worker file
-          if wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/dist/_worker.js; then
-            echo "Downloaded from dist/_worker.js"
-          elif wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/_worker.js; then
-            echo "Downloaded from _worker.js"
-          elif wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/_worker.js; then
-            echo "Downloaded from build/_worker.js"
+          git clone https://github.com/bia-pain-bache/BPB-Worker-Panel.git bpb-repo
+          cd bpb-repo
+          echo "Repository cloned successfully"
+          echo "Directory contents:"
+          ls -la
+      - name: Build BPB project
+        run: |
+          cd bpb-repo
+          echo "Installing project dependencies..."
+          npm install
+          echo "Building project..."
+          if [ -f "package.json" ]; then
+            # Check if there's a build script
+            if npm run | grep -q "build"; then
+              npm run build
+            elif npm run | grep -q "compile"; then
+              npm run compile
+            else
+              echo "No build script found, checking for bundled files..."
+              # Look for existing worker files
+              find . -name "*worker*.js" -o -name "_worker.js" | head -5
+            fi
+          fi
+      - name: Find and copy worker file
+        run: |
+          cd bpb-repo
+          # Look for the main worker file
+          if [ -f "dist/_worker.js" ]; then
+            cp dist/_worker.js ../origin.js
+            echo "Found worker file in dist/"
+          elif [ -f "build/_worker.js" ]; then
+            cp build/_worker.js ../origin.js
+            echo "Found worker file in build/"
+          elif [ -f "_worker.js" ]; then
+            cp _worker.js ../origin.js
+            echo "Found worker file in root"
+          elif [ -f "src/worker.js" ]; then
+            cp src/worker.js ../origin.js
+            echo "Found worker file in src/"
           else
-            echo "Failed to download worker file from any known location"
-            echo "Trying to find the correct file..."
-            # List repository contents to help debug
-            curl -s https://api.github.com/repos/bia-pain-bache/BPB-Worker-Panel/contents | grep -E '"name"|"download_url"' || true
+            echo "Searching for any worker-related files..."
+            find . -name "*worker*.js" -type f | head -10
+            echo "Contents of src directory:"
+            ls -la src/ || echo "No src directory"
             exit 1
           fi
-      - name: Verify file was downloaded
+      - name: Verify file was found
         run: |
           if [ ! -f origin.js ]; then
             echo "origin.js file not found"
             exit 1
           fi
           echo "File size: $(wc -c < origin.js) bytes"
-          echo "First 5 lines of the file:"
-          head -5 origin.js
+          echo "First 10 lines of the file:"
+          head -10 origin.js
       - name: Obfuscate BPB worker js
         run: |
           javascript-obfuscator origin.js --output _worker.js \
